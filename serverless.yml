@@ -1,0 +1,37 @@
+org: franciscocallemoreno
+console: true
+service: serverless-bgg-lets-play
+
+plugins:
+  - serverless-jetpack
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  region: eu-west-1
+  logRetentionInDays: 3
+  timeout: 10
+
+functions:
+  main:
+    handler: dist/lambda.handler
+    events:
+      - http:
+          method: ANY
+          path: /
+      - http:
+          method: ANY
+          path: '{proxy+}'
+    environment:
+      CACHE_TTL_IN_SECONDS: 3600
+      CACHE_TYPE: file
+      NO_COLOR: 1
+      REDIS_URL: redis://general.liuoye.ng.0001.euw1.cache.amazonaws.com:6379
+    # vpc:
+    #   subnetIds:
+    #     - "subnet-05c0715d"
+    #     - "subnet-11720575"
+    #     - "subnet-1d6b086b"
+    #   securityGroupIds:
+    #     - "sg-c3021da4"
