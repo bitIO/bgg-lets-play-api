@@ -249,16 +249,6 @@ export class AnxietyService {
     return false;
   }
 
-  private getGameInfo(
-    gameId: number,
-    gameName: string,
-    games: BggGame[],
-  ): BggGame {
-    return games.find((game) => {
-      return game.id === gameId;
-    });
-  }
-
   async compareCollection(userName: string, otherUserName: string) {
     const [user, otherUser] = await Promise.all([
       this.findOne(userName),
