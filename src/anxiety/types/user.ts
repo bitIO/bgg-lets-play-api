@@ -7,6 +7,6 @@ export interface BggUser {
   firstName: string;
   id: number;
   lastName: string;
-  plays?: BggPlay[];
+  plays: BggPlay[];
   userName: string;
 }
