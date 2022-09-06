@@ -68,6 +68,18 @@ function getGamesFromUsers(users: BggUser[]) {
   return Object.values(games);
 }
 
+function getPlaysFromUsersByGameId(users: BggUser[]) {
+  const plays: { [key: number]: BggPlay[] } = {};
+  users.forEach((user) => {
+    user.plays.forEach((play) => {
+      plays[play.game.id] = plays[play.game.id] || [];
+      plays[play.game.id].push(play);
+    });
+  });
+
+  return plays;
+}
+
 function getGameMissingInfo(
   games: BggAPIResponseDataGameItem[],
   gameId: string,
@@ -178,30 +190,52 @@ export class AnxietyService {
   }
 
   private async getNotPlayedGamesForUser(user: BggUser, otherUsers: BggUser) {
+    const usersToMatch = [user, otherUsers].map((item) => {
+      return item.userName;
+    });
     const combinedGames = getGamesFromUsers([user, otherUsers]);
-    const notPlayedGamesMap = [user, otherUsers].reduce<
-      Record<number, BggGame>
-    >((previousResult, currentUser) => {
-      const updatedResult = {
-        ...previousResult,
-      };
-      currentUser.plays.forEach((play) => {
-        if (
-          !updatedResult[play.game.id] &&
-          !this.playPlayedTogether(play, [user, otherUsers])
-        ) {
-          updatedResult[play.game.id] = combinedGames.find((game) => {
-            return game.id === play.game.id;
-          });
-        }
+    const combinedPlays = getPlaysFromUsersByGameId([user, otherUsers]);
+
+    const notPlayedGames: {
+      [key: number]: { game: BggGame; plays: BggPlay[] };
+    } = {};
+
+    Object.entries(combinedPlays).forEach(([gameId, plays]) => {
+      const game = combinedGames.find((gameEntry) => {
+        return gameEntry.id === +gameId;
       });
 
-      return updatedResult;
-    }, {});
+      const usersInPlays = [
+        ...new Set(
+          plays
+            .map((play) => {
+              return play.players
+                .map((playPlayer) => {
+                  return playPlayer.username;
+                })
+                .filter((playPlayer) => {
+                  return playPlayer !== '';
+                });
+            })
+            .flat(),
+        ),
+      ];
 
-    const missingGamesInfoIds = Object.keys(notPlayedGamesMap)
+      if (
+        !usersToMatch.every((player) => {
+          return usersInPlays.includes(player);
+        })
+      ) {
+        notPlayedGames[gameId] = {
+          game,
+          plays,
+        };
+      }
+    });
+
+    const missingGamesInfoIds = Object.keys(notPlayedGames)
       .filter((key) => {
-        return notPlayedGamesMap[key] === undefined;
+        return notPlayedGames[key].game === undefined;
       })
       .map((gameId) => {
         return +gameId;
@@ -214,66 +248,51 @@ export class AnxietyService {
       : [missingGamesData.item];
 
     data.forEach((gameData) => {
-      notPlayedGamesMap[+gameData.id] = {
-        id: +gameData.id,
-        images: {
-          image: gameData.image,
-          thumbnail: gameData.thumbnail,
-        },
-        info: {
-          maxPlayTime: +gameData.maxplaytime.value,
-          maxPlayers: +gameData.maxplayers.value,
-          minPlayTime: +gameData.minplaytime.value,
-          minPlayers: +gameData.minplayers.value,
-          numOwners: +gameData.statistics.ratings.owned.value,
-          playingTime: +gameData.playingtime.value,
-          weight: 0,
-        },
-        market: {
-          owned: +gameData.statistics.ratings.owned.value,
-          trading: +gameData.statistics.ratings.trading.value,
-          wanting: +gameData.statistics.ratings.wanting.value,
-          whishing: +gameData.statistics.ratings.wishing.value,
-        },
-        name: Array.isArray(gameData.name)
-          ? decode(gameData.name[0].value)
-          : decode(gameData.name.value),
-        publishedYear: +gameData.yearpublished,
-        stats: {
-          comments: 0,
-          rating: {
-            average: +gameData.statistics.ratings.average.value,
-            bayesaverage: +gameData.statistics.ratings.bayesaverage.value,
-            median: +gameData.statistics.ratings.median.value,
-            stddev: +gameData.statistics.ratings.stddev.value,
-            users: +gameData.statistics.ratings.usersrated.value,
-            value: 0,
+      const { comments, weight } = getGameMissingInfo(data, gameData.id);
+      notPlayedGames[+gameData.id] = {
+        ...notPlayedGames[+gameData.id],
+        game: {
+          id: +gameData.id,
+          images: {
+            image: gameData.image,
+            thumbnail: gameData.thumbnail,
           },
-          weight: 0,
+          info: {
+            maxPlayTime: +gameData.maxplaytime.value,
+            maxPlayers: +gameData.maxplayers.value,
+            minPlayTime: +gameData.minplaytime.value,
+            minPlayers: +gameData.minplayers.value,
+            numOwners: +gameData.statistics.ratings.owned.value,
+            playingTime: +gameData.playingtime.value,
+            weight: 0,
+          },
+          market: {
+            owned: +gameData.statistics.ratings.owned.value,
+            trading: +gameData.statistics.ratings.trading.value,
+            wanting: +gameData.statistics.ratings.wanting.value,
+            whishing: +gameData.statistics.ratings.wishing.value,
+          },
+          name: Array.isArray(gameData.name)
+            ? decode(gameData.name[0].value)
+            : decode(gameData.name.value),
+          publishedYear: +gameData.yearpublished,
+          stats: {
+            comments,
+            rating: {
+              average: +gameData.statistics.ratings.average.value,
+              bayesaverage: +gameData.statistics.ratings.bayesaverage.value,
+              median: +gameData.statistics.ratings.median.value,
+              stddev: +gameData.statistics.ratings.stddev.value,
+              users: +gameData.statistics.ratings.usersrated.value,
+              value: 0,
+            },
+            weight,
+          },
         },
       };
     });
 
-    return Object.values(notPlayedGamesMap);
-  }
-
-  private playPlayedTogether(play: BggPlay, users: BggUser[]) {
-    const playPlayers = play.players.filter((player) => {
-      return player.username !== undefined;
-    });
-    const userNames = users.map((user) => {
-      return user.userName;
-    });
-
-    if (
-      playPlayers.every((player) => {
-        return userNames.includes(player.username);
-      })
-    ) {
-      return true;
-    }
-
-    return false;
+    return Object.values(notPlayedGames);
   }
 
   async compareCollection(userName: string, otherUserName: string) {
