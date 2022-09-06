@@ -6,7 +6,6 @@ export interface BggGame {
   name: string;
   plays?: number;
   publishedYear?: number;
-  rating?: BggGameRating;
   stats?: BggGameStats;
 }
 
@@ -43,7 +42,7 @@ export interface BggGameRating {
 
 export interface BggGameStats {
   comments: number;
-  rating: number;
+  rating: BggGameRating;
   weight: number;
 }
 

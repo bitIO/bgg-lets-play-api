@@ -58,7 +58,7 @@ function parseUserPlayItem(play: BggApiResponseDataPlaysItem): BggPlay {
 function getGamesFromUsers(users: BggUser[]) {
   const games: { [key: number]: BggGame } = {};
   users.forEach((user) => {
-    user.collection.games.forEach((game) => {
+    user.collection.forEach((game) => {
       if (!games[game.id]) {
         games[game.id] = game;
       }
@@ -86,25 +86,26 @@ export class AnxietyService {
 
     const userData: BggUser = {
       avatar: user.avatarlink.value,
-      collection: {
-        games: collection.item.map((item) => {
-          return {
-            id: +item.objectid,
-            images: {
-              image: item.image,
-              thumbnail: item.thumbnail,
-            },
-            info: {
-              maxPlayTime: +item.stats.maxplaytime,
-              maxPlayers: +item.stats.maxplayers,
-              minPlayTime: +item.stats.minplaytime,
-              minPlayers: +item.stats.minplayers,
-              numOwners: +item.stats.numowned,
-              playingTime: +item.stats.playingtime,
-            },
-            name: decode(item.name.text),
-            plays: item.numplays,
-            publishedYear: item.yearpublished,
+      collection: collection.item.map<BggGame>((item) => {
+        return {
+          id: +item.objectid,
+          images: {
+            image: item.image,
+            thumbnail: item.thumbnail,
+          },
+          info: {
+            maxPlayTime: +item.stats.maxplaytime,
+            maxPlayers: +item.stats.maxplayers,
+            minPlayTime: +item.stats.minplaytime,
+            minPlayers: +item.stats.minplayers,
+            numOwners: +item.stats.numowned,
+            playingTime: +item.stats.playingtime,
+          },
+          name: decode(item.name.text),
+          plays: item.numplays,
+          publishedYear: item.yearpublished,
+          stats: {
+            comments: 0,
             rating: {
               average: +item.stats.rating.average.value,
               bayesaverage: +item.stats.rating.bayesaverage.value,
@@ -116,27 +117,21 @@ export class AnxietyService {
                   ? +item.stats.rating.value
                   : null,
             },
-            stats: {
-              comments: 0,
-              rating: 0,
-              weight: 0,
-            },
-            status: {
-              fortrade: item.status.fortrade !== '0',
-              lastmodified: new Date(item.status.lastmodified),
-              own: item.status.own !== '0',
-              preordered: item.status.preordered !== '0',
-              prevowned: item.status.prevowned !== '0',
-              want: item.status.want !== '0',
-              wanttobuy: item.status.wanttobuy !== '0',
-              wanttoplay: item.status.wanttoplay !== '0',
-              wishlist: item.status.wishlist !== '0',
-            },
-          };
-        }),
-        publicationDate: new Date(collection.pubdate),
-        totalItems: +collection.totalitems,
-      },
+            weight: 0,
+          },
+          status: {
+            fortrade: item.status.fortrade !== '0',
+            lastmodified: new Date(item.status.lastmodified),
+            own: item.status.own !== '0',
+            preordered: item.status.preordered !== '0',
+            prevowned: item.status.prevowned !== '0',
+            want: item.status.want !== '0',
+            wanttobuy: item.status.wanttobuy !== '0',
+            wanttoplay: item.status.wanttoplay !== '0',
+            wishlist: item.status.wishlist !== '0',
+          },
+        };
+      }),
       firstName: user.firstname.value,
       id: +user.id,
       lastName: user.lastname.value,
@@ -217,13 +212,17 @@ export class AnxietyService {
           ? decode(gameData.name[0].value)
           : decode(gameData.name.value),
         publishedYear: +gameData.yearpublished,
-        rating: {
-          average: +gameData.statistics.ratings.average.value,
-          bayesaverage: +gameData.statistics.ratings.bayesaverage.value,
-          median: +gameData.statistics.ratings.median.value,
-          stddev: +gameData.statistics.ratings.stddev.value,
-          users: +gameData.statistics.ratings.usersrated.value,
-          value: 0,
+        stats: {
+          comments: 0,
+          rating: {
+            average: +gameData.statistics.ratings.average.value,
+            bayesaverage: +gameData.statistics.ratings.bayesaverage.value,
+            median: +gameData.statistics.ratings.median.value,
+            stddev: +gameData.statistics.ratings.stddev.value,
+            users: +gameData.statistics.ratings.usersrated.value,
+            value: 0,
+          },
+          weight: 0,
         },
       };
     });
