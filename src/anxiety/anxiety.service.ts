@@ -68,6 +68,21 @@ function getGamesFromUsers(users: BggUser[]) {
   return Object.values(games);
 }
 
+function getGameMissingInfo(
+  games: BggAPIResponseDataGameItem[],
+  gameId: string,
+) {
+  const gameInfo = games.find((game) => {
+    return game.id === gameId;
+  });
+
+  return {
+    comments: +gameInfo.statistics.ratings.numcomments.value,
+    weight: +gameInfo.statistics.ratings.averageweight.value,
+    weights: +gameInfo.statistics.ratings.numweights.value,
+  };
+}
+
 @Injectable()
 export class AnxietyService {
   constructor(private bgg: BggService, private cache: CacheService) {}
@@ -83,10 +98,22 @@ export class AnxietyService {
       this.bgg.getCollection(userName),
       this.bgg.getPlays(userName),
     ]);
-
+    const gamesExtraInfoResponse = await this.bgg.getGamesInfo(
+      collection.item.map((game) => {
+        return +game.objectid;
+      }),
+    );
+    const gamesExtraInfo = Array.isArray(gamesExtraInfoResponse.item)
+      ? gamesExtraInfoResponse.item
+      : [gamesExtraInfoResponse.item];
     const userData: BggUser = {
       avatar: user.avatarlink.value,
       collection: collection.item.map<BggGame>((item) => {
+        const { comments, weight } = getGameMissingInfo(
+          gamesExtraInfo,
+          item.objectid,
+        );
+
         return {
           id: +item.objectid,
           images: {
@@ -105,7 +132,7 @@ export class AnxietyService {
           plays: item.numplays,
           publishedYear: item.yearpublished,
           stats: {
-            comments: 0,
+            comments,
             rating: {
               average: +item.stats.rating.average.value,
               bayesaverage: +item.stats.rating.bayesaverage.value,
@@ -117,7 +144,7 @@ export class AnxietyService {
                   ? +item.stats.rating.value
                   : null,
             },
-            weight: 0,
+            weight,
           },
           status: {
             fortrade: item.status.fortrade !== '0',
