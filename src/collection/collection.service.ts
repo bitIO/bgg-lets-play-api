@@ -8,6 +8,8 @@ export class CollectionService {
   constructor(private bgg: BggService) {}
 
   create(createCollectionDto: CreateCollectionDto) {
+    console.log('createCollectionDto :>> ', createCollectionDto);
+
     return 'This action adds a new collection';
   }
 
@@ -20,6 +22,8 @@ export class CollectionService {
   }
 
   update(userName, updateCollectionDto: UpdateCollectionDto) {
+    console.log('updateCollectionDto :>> ', updateCollectionDto);
+
     return `This action updates a #${userName} collection`;
   }
 

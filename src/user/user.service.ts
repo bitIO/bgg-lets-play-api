@@ -8,6 +8,8 @@ export class UserService {
   constructor(private bgg: BggService) {}
 
   create(createUserDto: CreateUserDto) {
+    console.log('createUserDto :>> ', createUserDto);
+
     return 'This action adds a new user';
   }
 
@@ -20,6 +22,8 @@ export class UserService {
   }
 
   update(userName: string, updateUserDto: UpdateUserDto) {
+    console.log('updateUserDto :>> ', updateUserDto);
+
     return `This action updates a #${userName} user`;
   }
 

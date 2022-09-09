@@ -8,6 +8,8 @@ export class PlaysService {
   constructor(private bgg: BggService) {}
 
   create(createPlayDto: CreatePlayDto) {
+    console.log('createPlayDto :>> ', createPlayDto);
+
     return 'This action adds a new play';
   }
 
@@ -20,6 +22,8 @@ export class PlaysService {
   }
 
   update(userName: string, updatePlayDto: UpdatePlayDto) {
+    console.log('updateCollectionDto :>> ', updatePlayDto);
+
     return `This action updates a #${userName} play`;
   }
 
