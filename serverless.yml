@@ -1,4 +1,8 @@
 org: franciscocallemoreno
+app: bgg-lets-play-api
+
+frameworkVersion: '3'
+
 console: true
 service: serverless-bgg-lets-play
 
