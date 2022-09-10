@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { addSeconds, isBefore } from 'date-fns';
 import { BggService } from '../bgg/bgg.service';
 import { DatabaseService } from '../database/database.service';
+import { isExpired } from '../utils';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -36,19 +36,14 @@ export class UserService {
       },
     });
 
-    if (user) {
-      const ttlInSeconds = +this.config.getOrThrow('CACHE_TTL_IN_SECONDS');
-      const maxAge = addSeconds(user.updatedAt, ttlInSeconds);
-      this.logger.debug('user already in the database', {
-        maxAge,
-        ttlInSeconds,
-      });
-      if (isBefore(user.updatedAt, maxAge)) {
-        this.logger.debug('user data is still valid');
-
-        return user;
-      }
-      this.logger.debug(`user ${userName} data is expired, revalidating ...`);
+    if (
+      user &&
+      !isExpired(
+        user.updatedAt,
+        +this.config.getOrThrow('CACHE_TTL_IN_SECONDS'),
+      )
+    ) {
+      return user;
     }
 
     const response = await this.bgg.getUser(userName);
