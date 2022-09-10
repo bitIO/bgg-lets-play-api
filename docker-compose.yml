@@ -1,5 +1,22 @@
 version: "3"
 services:
+  api:
+    build:
+      dockerfile: Dockerfile
+      context: .
+      # Only will build development stage from our dockerfile
+      target: development
+    volumes:
+      - .:/usr/src/app
+    env_file:
+    - .env
+    # Run a command against the development stage of the image
+    command: npm run start:dev
+    ports:
+      - 3000:3000
+    networks:
+      - bgg-lets-play
+
   db:
     image: postgres:latest
     environment:
@@ -8,6 +25,8 @@ services:
       - POSTGRES_DB=local
     ports:
       - "5432:5432"
+    volumes:
+      - .docker/postgresql:/var/lib/postgresql
     networks:
       - bgg-lets-play
 
@@ -21,5 +40,14 @@ services:
       - "5432:5432"
     networks:
       - bgg-lets-play
+  redis: # Name of container
+    image: redis
+    ports:
+      - 6379:6379
+    volumes:
+      - .docker/redis:/data
+    networks:
+      - bgg-lets-play
+
 networks:
   bgg-lets-play:
