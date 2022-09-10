@@ -1,11 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { addSeconds, isBefore } from 'date-fns';
 import { BggService } from '../bgg/bgg.service';
+import { DatabaseService } from '../database/database.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
-  constructor(private bgg: BggService) {}
+  private readonly logger = new Logger(UserService.name);
+
+  constructor(
+    private bgg: BggService,
+    private database: DatabaseService,
+    private config: ConfigService,
+  ) {}
 
   create(createUserDto: CreateUserDto) {
     console.log('createUserDto :>> ', createUserDto);
@@ -17,8 +26,51 @@ export class UserService {
     return `This action returns all user`;
   }
 
-  findOne(userName: string) {
-    return this.bgg.getUser(userName);
+  async findOne(userName: string) {
+    this.logger.debug('request user info', {
+      userName,
+    });
+    const user = await this.database.user.findUnique({
+      where: {
+        userName,
+      },
+    });
+
+    if (user) {
+      const ttlInSeconds = +this.config.getOrThrow('CACHE_TTL_IN_SECONDS');
+      const maxAge = addSeconds(user.updatedAt, ttlInSeconds);
+      this.logger.debug('user already in the database', {
+        maxAge,
+        ttlInSeconds,
+      });
+      if (isBefore(user.updatedAt, maxAge)) {
+        this.logger.debug('user data is still valid');
+
+        return user;
+      }
+      this.logger.debug(`user ${userName} data is expired, revalidating ...`);
+    }
+
+    const response = await this.bgg.getUser(userName);
+    const dbUser = await this.database.user.upsert({
+      create: {
+        firstName: response.firstname.value,
+        id: +response.id,
+        lastName: response.lastname.value,
+        userName: response.name,
+      },
+      update: {
+        firstName: response.firstname.value,
+        id: +response.id,
+        lastName: response.lastname.value,
+        userName: response.name,
+      },
+      where: {
+        userName,
+      },
+    });
+
+    return dbUser;
   }
 
   update(userName: string, updateUserDto: UpdateUserDto) {
@@ -28,6 +80,10 @@ export class UserService {
   }
 
   remove(userName: string) {
-    return `This action removes a #${userName} user`;
+    return this.database.user.delete({
+      where: {
+        userName,
+      },
+    });
   }
 }
