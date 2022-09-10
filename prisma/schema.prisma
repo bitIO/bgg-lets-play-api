@@ -23,6 +23,159 @@ model Event {
   description String?
   endsAt      DateTime?
 
+  attendees User[]
+
   @@unique([name, location, startsAt])
   @@map("events")
+}
+
+model User {
+  id        Int      @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  firstName String
+  lastName  String
+  userName  String
+  avatar    String?
+
+  Event   Event? @relation(fields: [eventId], references: [id])
+  eventId Int?
+
+  collection Game[]
+  plays      Play[]
+
+  @@unique([userName])
+  @@map("users")
+}
+
+model Game {
+  id        Int      @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name          String
+  plays         Int?
+  publishedYear Int?
+
+  info         GameInfo?   @relation(fields: [gameInfoId], references: [id])
+  gameInfoId   Int?
+  mages        GameImage?  @relation(fields: [gameImageId], references: [id])
+  gameImageId  Int?
+  market       GameMarket? @relation(fields: [gameMarketId], references: [id])
+  gameMarketId Int?
+  rating       GameRating? @relation(fields: [gameRatingId], references: [id])
+  gameRatingId Int?
+  User         User?       @relation(fields: [userId], references: [id])
+  userId       Int?
+
+  Play Play[]
+
+  @@unique([name])
+  @@map("games")
+}
+
+model GameInfo {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  comments    Int
+  maxPlayTime Int
+  maxPlayers  Int
+  minPlayTime Int
+  minPlayers  Int
+  numOwners   Int
+  playingTime Int
+  weight      Int
+
+  Game Game[]
+
+  @@map("game_info")
+}
+
+model GameImage {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  image     String
+  thumbnail String
+
+  Game Game[]
+
+  @@map("game_images")
+}
+
+model GameMarket {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owned    Int
+  trading  Int
+  wanting  Int
+  whishing Int
+
+  Game Game[]
+
+  @@map("game_market")
+}
+
+model GameRating {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  average      Int
+  bayesaverage Int
+  median       Int
+  stddev       Int
+  users        Int
+  value        Int
+
+  Game Game[]
+
+  @@map("game_rating")
+}
+
+model Play {
+  id        Int      @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  date     DateTime
+  length   Int
+  location String
+  quantity Int
+
+  game   Game  @relation(fields: [gameId], references: [id])
+  gameId Int
+  User   User? @relation(fields: [userId], references: [id])
+  userId Int?
+
+  players PlayPlayer[]
+
+  @@map("plays")
+}
+
+model PlayPlayer {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  color         String?
+  name          String?
+  new           Boolean?
+  rating        String?
+  score         String?
+  startposition String?
+  userid        Int?
+  username      String?
+  win           Boolean?
+
+  Play   Play? @relation(fields: [playId], references: [id])
+  playId Int?
+
+  @@map("play_players")
 }
