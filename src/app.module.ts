@@ -1,25 +1,29 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { AnxietyModule } from './anxiety/anxiety.module';
 import { BggModule } from './bgg/bgg.module';
+import { CacheModule } from './cache/cache.module';
 import { CollectionModule } from './collection/collection.module';
+import { DatabaseModule } from './database/database.module';
+import { EventModule } from './event/event.module';
 import { PlaysModule } from './plays/plays.module';
 import { ThingModule } from './thing/thing.module';
 import { UserModule } from './user/user.module';
-import { AnxietyModule } from './anxiety/anxiety.module';
-import { CacheModule } from './cache/cache.module';
 
 @Module({
   imports: [
+    AnxietyModule,
+    BggModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    BggModule,
     CollectionModule,
+    CacheModule,
+    DatabaseModule,
+    EventModule,
     PlaysModule,
     ThingModule,
     UserModule,
-    AnxietyModule,
-    CacheModule,
   ],
 })
 export class AppModule {}
