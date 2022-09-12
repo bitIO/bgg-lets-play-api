@@ -9,8 +9,8 @@ import {
   Post,
 } from '@nestjs/common';
 import { DatabaseError } from '../database/types/error/DatabaseError';
-import { CreateEventDto } from './dto/create-event.dto';
-import { UpdateEventDto } from './dto/update-event.dto';
+import { CreateEventDto } from './dto/CreateEvent.dto';
+import { UpdateEventDto } from './dto/UpdateEvent.dto';
 import { EventService } from './event.service';
 
 @Controller('events')

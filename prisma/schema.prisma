@@ -22,6 +22,7 @@ model Event {
   coordinates String?
   description String?
   endsAt      DateTime?
+  nomBggUser  Json[]
 
   UserEvents UserEvents[]
 

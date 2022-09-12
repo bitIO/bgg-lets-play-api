@@ -22,6 +22,41 @@ export class UserService {
     return this.database.user.findMany({});
   }
 
+  findByUserName(userNames: string[]) {
+    return this.database.user.findMany({
+      include: {
+        UserCollection: {
+          include: {
+            game: {
+              include: {
+                images: true,
+                info: true,
+                market: true,
+                rating: true,
+              },
+            },
+          },
+          orderBy: {
+            game: {
+              name: 'asc',
+            },
+          },
+        },
+        plays: {
+          include: {
+            game: true,
+            players: true,
+          },
+        },
+      },
+      where: {
+        userName: {
+          in: userNames,
+        },
+      },
+    });
+  }
+
   async findOne(userName: string) {
     this.logger.debug('request user info', {
       userName,
