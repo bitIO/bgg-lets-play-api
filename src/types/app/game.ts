@@ -16,7 +16,6 @@ export interface BggGameInfo {
   minPlayers: number;
   numOwners: number;
   playingTime: number;
-  weight?: number;
 }
 
 export interface BggGameImage {
@@ -43,7 +42,10 @@ export interface BggGameRating {
 export interface BggGameStats {
   comments: number;
   rating: BggGameRating;
-  weight: number;
+  weight: {
+    avg: number;
+    votes: number;
+  };
 }
 
 export interface BggGameStatus {
