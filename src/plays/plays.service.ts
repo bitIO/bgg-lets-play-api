@@ -77,6 +77,32 @@ export class PlaysService {
     }
   }
 
+  find() {
+    return this.database.play.findMany({
+      include: {
+        User: true,
+        game: true,
+        players: true,
+      },
+      orderBy: {
+        date: 'desc',
+      },
+    });
+  }
+
+  findById(id: number) {
+    return this.database.play.findUnique({
+      include: {
+        User: true,
+        game: true,
+        players: true,
+      },
+      where: {
+        id,
+      },
+    });
+  }
+
   async update(user: User, response: BggApiResponseDataPlay[]) {
     const items = response || (await this.bgg.getPlays(user.userName));
     const plays = items.flatMap((i) => {
