@@ -1,15 +1,15 @@
 import { ValueObject } from './common';
 
-export interface BggApiResponseDataPlays {
+export interface BggApiResponseDataPlay {
   page: string;
-  play: BggApiResponseDataPlaysItem[];
+  play: BggApiResponseDataPlayItem[];
   termsofuse: string;
   total: string;
   userid: string;
   username: string;
 }
 
-export interface BggApiResponseDataPlaysItem {
+export interface BggApiResponseDataPlayItem {
   date: string;
   id: string;
   incomplete: string;

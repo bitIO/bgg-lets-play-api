@@ -2,9 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BggService } from '../bgg/bgg.service';
 import { DatabaseService } from '../database/database.service';
+import { GameService } from '../game/game.service';
+import { PlaysService } from '../plays/plays.service';
 import { isExpired } from '../utils';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
@@ -12,25 +12,47 @@ export class UserService {
 
   constructor(
     private bgg: BggService,
-    private database: DatabaseService,
     private config: ConfigService,
+    private database: DatabaseService,
+    private games: GameService,
+    private plays: PlaysService,
   ) {}
 
-  create(createUserDto: CreateUserDto) {
-    console.log('createUserDto :>> ', createUserDto);
-
-    return 'This action adds a new user';
-  }
-
   findAll() {
-    return `This action returns all user`;
+    return this.database.user.findMany({});
   }
 
   async findOne(userName: string) {
     this.logger.debug('request user info', {
       userName,
     });
+
     const user = await this.database.user.findUnique({
+      include: {
+        UserCollection: {
+          include: {
+            game: {
+              include: {
+                images: true,
+                info: true,
+                market: true,
+                rating: true,
+              },
+            },
+          },
+          orderBy: {
+            game: {
+              name: 'asc',
+            },
+          },
+        },
+        plays: {
+          include: {
+            game: true,
+            players: true,
+          },
+        },
+      },
       where: {
         userName,
       },
@@ -43,35 +65,111 @@ export class UserService {
         +this.config.getOrThrow('CACHE_TTL_IN_SECONDS'),
       )
     ) {
+      this.logger.debug('User data still valid', {
+        updatedAt: user.updatedAt,
+        userName,
+      });
+
       return user;
     }
 
-    const response = await this.bgg.getUser(userName);
-    const dbUser = await this.database.user.upsert({
-      create: {
-        firstName: response.firstname.value,
-        id: +response.id,
-        lastName: response.lastname.value,
-        userName: response.name,
-      },
-      update: {
-        firstName: response.firstname.value,
-        id: +response.id,
-        lastName: response.lastname.value,
-        userName: response.name,
+    this.logger.debug('User data not found or expired', {
+      userName,
+    });
+
+    await this.update(userName);
+
+    return this.database.user.findUnique({
+      include: {
+        UserCollection: {
+          include: {
+            game: {
+              include: {
+                images: true,
+                info: true,
+                market: true,
+                rating: true,
+              },
+            },
+          },
+          orderBy: {
+            game: {
+              name: 'asc',
+            },
+          },
+        },
+        plays: {
+          include: {
+            game: true,
+            players: true,
+          },
+        },
       },
       where: {
         userName,
       },
     });
-
-    return dbUser;
   }
 
-  update(userName: string, updateUserDto: UpdateUserDto) {
-    console.log('updateUserDto :>> ', updateUserDto);
+  async update(userName: string) {
+    const [bggResponseUser, bggResponseCollection, bggResponsePlays] =
+      await Promise.all([
+        this.bgg.getUser(userName),
+        this.bgg.getCollection(userName, true),
+        this.bgg.getPlays(userName),
+      ]);
+    const gameIds = [
+      ...new Set(
+        bggResponseCollection.item.map((item) => {
+          return +item.objectid;
+        }),
+      ),
+    ];
+    bggResponsePlays.forEach(({ play }) => {
+      play.forEach((p) => {
+        const gameId = +p.item.objectid;
+        if (!gameIds.includes(gameId)) {
+          gameIds.push(gameId);
+        }
+      });
+    });
 
-    return `This action updates a #${userName} user`;
+    const gamesInfo = await this.games.retrieveAndUpdateGamesInfo(gameIds);
+    const dbUser = await this.database.user.upsert({
+      create: {
+        avatar: bggResponseUser.avatarlink.value,
+        firstName: bggResponseUser.firstname.value,
+        id: +bggResponseUser.id,
+        lastName: bggResponseUser.lastname.value,
+        userName: bggResponseUser.name,
+      },
+      update: {
+        avatar: bggResponseUser.avatarlink.value,
+        firstName: bggResponseUser.firstname.value,
+        lastName: bggResponseUser.lastname.value,
+        userName: bggResponseUser.name,
+      },
+      where: {
+        userName,
+      },
+    });
+    await this.database.userCollection.deleteMany({
+      where: {
+        userId: dbUser.id,
+      },
+    });
+    await this.database.userCollection.createMany({
+      data: gamesInfo.map((gameInfo) => {
+        return {
+          gameId: gameInfo.id,
+          userId: dbUser.id,
+        };
+      }),
+      skipDuplicates: true,
+    });
+    await this.plays.update(dbUser, bggResponsePlays);
+
+    return dbUser;
   }
 
   remove(userName: string) {

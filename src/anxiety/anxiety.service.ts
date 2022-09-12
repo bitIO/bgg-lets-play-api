@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { decode } from 'he';
 import { BggService } from '../bgg/bgg.service';
+import { CacheService } from '../cache/cache.service';
 import {
   BggAPIResponseDataGameItem,
-  BggApiResponseDataPlaysItem,
-} from '../bgg/types';
-import { CacheService } from '../cache/cache.service';
-import { BggGame, BggPlay, BggUser } from './types';
+  BggApiResponseDataPlayItem,
+  BggGame,
+  BggPlay,
+  BggUser,
+} from '../types';
 
-function parseUserPlayItem(play: BggApiResponseDataPlaysItem): BggPlay {
+function parseUserPlayItem(play: BggApiResponseDataPlayItem): BggPlay {
   return {
     date: new Date(play.date),
     game: {
@@ -135,10 +137,11 @@ export class AnxietyService {
           info: {
             maxPlayTime: +item.stats.maxplaytime,
             maxPlayers: +item.stats.maxplayers,
+            minAge: 0,
             minPlayTime: +item.stats.minplaytime,
             minPlayers: +item.stats.minplayers,
-            numOwners: +item.stats.numowned,
             playingTime: +item.stats.playingtime,
+            weight,
           },
           name: decode(item.name.text),
           plays: item.numplays,
@@ -156,7 +159,7 @@ export class AnxietyService {
                   ? +item.stats.rating.value
                   : null,
             },
-            weight,
+            weights: 0,
           },
           status: {
             fortrade: item.status.fortrade !== '0',
@@ -260,11 +263,11 @@ export class AnxietyService {
           info: {
             maxPlayTime: +gameData.maxplaytime.value,
             maxPlayers: +gameData.maxplayers.value,
+            minAge: +gameData.minage.value,
             minPlayTime: +gameData.minplaytime.value,
             minPlayers: +gameData.minplayers.value,
-            numOwners: +gameData.statistics.ratings.owned.value,
             playingTime: +gameData.playingtime.value,
-            weight: 0,
+            weight,
           },
           market: {
             owned: +gameData.statistics.ratings.owned.value,
@@ -286,7 +289,7 @@ export class AnxietyService {
               users: +gameData.statistics.ratings.usersrated.value,
               value: 0,
             },
-            weight,
+            weights: +gameData.statistics.ratings.numweights.value,
           },
         },
       };

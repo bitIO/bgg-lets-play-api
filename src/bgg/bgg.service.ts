@@ -9,9 +9,9 @@ import {
 import {
   BggApiResponseDataCollection,
   BggAPIResponseDataGame,
-  BggApiResponseDataPlays,
+  BggApiResponseDataPlay,
   BggApiResponseDataUser,
-} from './types';
+} from '../types';
 
 @Injectable()
 export class BggService {
@@ -41,8 +41,8 @@ export class BggService {
       username: userName,
     });
 
-    const data: BggApiResponseDataPlays[] = [];
-    const responseData = response.data as BggApiResponseDataPlays;
+    const data: BggApiResponseDataPlay[] = [];
+    const responseData = response.data as BggApiResponseDataPlay;
     data.push(responseData);
 
     const total = +responseData.total;

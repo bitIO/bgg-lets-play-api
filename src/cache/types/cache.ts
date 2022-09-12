@@ -1,14 +1,14 @@
-import { BggUser } from '../../anxiety/types';
 import {
   BggApiResponseDataCollection,
   BggAPIResponseDataGame,
-  BggApiResponseDataPlays,
-} from '../../bgg/types';
+  BggApiResponseDataPlay,
+  BggUser,
+} from '../../types';
 
 export interface BggCache {
   loadBggCollection?: (userName: string) => BggApiResponseDataCollection;
   loadBggGame?: (gameId: string) => BggAPIResponseDataGame;
-  loadBggPlays?: (userName: string) => BggApiResponseDataPlays[];
+  loadBggPlays?: (userName: string) => BggApiResponseDataPlay[];
   loadUser: (userName: string) => Promise<BggUser>;
   saveBggCollection?: (
     userName: string,
@@ -20,7 +20,7 @@ export interface BggCache {
   ) => void;
   saveBggPlays?: (
     userName: string,
-    playsData: BggApiResponseDataPlays[],
+    playsData: BggApiResponseDataPlay[],
   ) => void;
   saveUser: (userData: BggUser) => Promise<void>;
 }

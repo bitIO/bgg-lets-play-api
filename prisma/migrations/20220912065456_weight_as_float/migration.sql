@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "game_info" ALTER COLUMN "weight" SET DATA TYPE DOUBLE PRECISION;

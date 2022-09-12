@@ -23,10 +23,20 @@ model Event {
   description String?
   endsAt      DateTime?
 
-  attendees User[]
+  UserEvents UserEvents[]
 
   @@unique([name, location, startsAt])
   @@map("events")
+}
+
+model UserEvents {
+  user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId  Int
+  eventId Int
+
+  @@id([userId, eventId])
+  @@map("user_events")
 }
 
 model User {
@@ -39,14 +49,27 @@ model User {
   userName  String
   avatar    String?
 
-  Event   Event? @relation(fields: [eventId], references: [id])
-  eventId Int?
-
-  collection Game[]
-  plays      Play[]
+  plays          Play[]
+  UserCollection UserCollection[]
+  UserGameStatus UserGameStatus[]
+  UserEvents     UserEvents[]
+  PlayPlayer     PlayPlayer[]
 
   @@unique([userName])
   @@map("users")
+}
+
+model UserCollection {
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
+  game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId Int
+
+  @@id([userId, gameId])
+  @@map("user_collection")
 }
 
 model Game {
@@ -58,18 +81,18 @@ model Game {
   plays         Int?
   publishedYear Int?
 
-  info         GameInfo?   @relation(fields: [gameInfoId], references: [id])
+  info         GameInfo?   @relation(fields: [gameInfoId], references: [id], onDelete: Cascade)
   gameInfoId   Int?
-  mages        GameImage?  @relation(fields: [gameImageId], references: [id])
+  images       GameImage?  @relation(fields: [gameImageId], references: [id], onDelete: Cascade)
   gameImageId  Int?
-  market       GameMarket? @relation(fields: [gameMarketId], references: [id])
+  market       GameMarket? @relation(fields: [gameMarketId], references: [id], onDelete: Cascade)
   gameMarketId Int?
-  rating       GameRating? @relation(fields: [gameRatingId], references: [id])
+  rating       GameRating? @relation(fields: [gameRatingId], references: [id], onDelete: Cascade)
   gameRatingId Int?
-  User         User?       @relation(fields: [userId], references: [id])
-  userId       Int?
 
-  Play Play[]
+  Play           Play[]
+  UserGameStatus UserGameStatus[]
+  UserCollection UserCollection[]
 
   @@unique([name])
   @@map("games")
@@ -81,13 +104,15 @@ model GameInfo {
   updatedAt DateTime @updatedAt
 
   comments    Int
+  description String
   maxPlayTime Int
   maxPlayers  Int
+  minAge      Int
   minPlayTime Int
   minPlayers  Int
-  numOwners   Int
   playingTime Int
-  weight      Int
+  weight      Float
+  weights     Int
 
   Game Game[]
 
@@ -127,16 +152,38 @@ model GameRating {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  average      Int
-  bayesaverage Int
+  average      Float
+  bayesaverage Float
   median       Int
-  stddev       Int
+  stddev       Float
   users        Int
   value        Int
 
   Game Game[]
 
   @@map("game_rating")
+}
+
+model UserGameStatus {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  own        Boolean
+  preordered Boolean
+  prevowned  Boolean
+  want       Boolean
+  wanttobuy  Boolean
+  wanttoplay Boolean
+  wishlist   Boolean
+
+  game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId Int
+  userId Int
+
+  @@unique([gameId, userId])
+  @@map("user_game_status")
 }
 
 model Play {
@@ -149,10 +196,10 @@ model Play {
   location String
   quantity Int
 
-  game   Game  @relation(fields: [gameId], references: [id])
+  game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
   gameId Int
-  User   User? @relation(fields: [userId], references: [id])
-  userId Int?
+  User   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
 
   players PlayPlayer[]
 
@@ -170,11 +217,12 @@ model PlayPlayer {
   rating        String?
   score         String?
   startposition String?
-  userid        Int?
   username      String?
   win           Boolean?
 
-  Play   Play? @relation(fields: [playId], references: [id])
+  user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int?
+  play   Play? @relation(fields: [playId], references: [id], onDelete: Cascade)
   playId Int?
 
   @@map("play_players")

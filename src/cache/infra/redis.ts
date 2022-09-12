@@ -1,10 +1,10 @@
 import Redis from 'ioredis';
-import { BggUser } from '../../anxiety/types';
 import {
   BggApiResponseDataCollection,
   BggAPIResponseDataGame,
-  BggApiResponseDataPlays,
-} from '../../bgg/types';
+  BggApiResponseDataPlay,
+  BggUser,
+} from '../../types';
 import { BggCache } from '../types';
 
 class CacheRedis implements BggCache {
@@ -32,7 +32,7 @@ class CacheRedis implements BggCache {
 
   loadBggGame?: (gameId: string) => BggAPIResponseDataGame;
 
-  loadBggPlays?: (userName: string) => BggApiResponseDataPlays[];
+  loadBggPlays?: (userName: string) => BggApiResponseDataPlay[];
 
   async loadUser(userName: string) {
     const data = await this.client.get(this.generateKey(userName));
@@ -55,7 +55,7 @@ class CacheRedis implements BggCache {
 
   saveBggPlays?: (
     userName: string,
-    playsData: BggApiResponseDataPlays[],
+    playsData: BggApiResponseDataPlay[],
   ) => void;
 
   async saveUser(userData: BggUser) {
