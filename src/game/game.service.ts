@@ -146,6 +146,31 @@ export class GameService {
     }
   }
 
+  findAll() {
+    return this.database.game.findMany({
+      include: {
+        images: true,
+        info: true,
+        market: true,
+        rating: true,
+      },
+    });
+  }
+
+  findOneById(id: number) {
+    return this.database.game.findUnique({
+      include: {
+        images: true,
+        info: true,
+        market: true,
+        rating: true,
+      },
+      where: {
+        id,
+      },
+    });
+  }
+
   async updateGamesInfo(bggResponseGames: BggAPIResponseDataGame) {
     const gamesInfo = Array.isArray(bggResponseGames.item)
       ? bggResponseGames.item
