@@ -31,7 +31,7 @@ export class EventService {
       );
       await Promise.all(
         users.map((user) => {
-          return this.db.userEvents.create({
+          return this.db.eventsUsers.create({
             data: {
               eventId: event.id,
               userId: user.id,

@@ -24,20 +24,20 @@ model Event {
   endsAt      DateTime?
   nomBggUser  Json[]
 
-  UserEvents UserEvents[]
+  EventsUsers EventsUsers[]
 
   @@unique([name, location, startsAt])
   @@map("events")
 }
 
-model UserEvents {
+model EventsUsers {
   user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   userId  Int
   eventId Int
 
   @@id([userId, eventId])
-  @@map("user_events")
+  @@map("events_users")
 }
 
 model User {
@@ -53,7 +53,7 @@ model User {
   plays          Play[]
   UserCollection UserCollection[]
   UserGameStatus UserGameStatus[]
-  UserEvents     UserEvents[]
+  EventsUsers    EventsUsers[]
   PlayPlayer     PlayPlayer[]
 
   @@unique([userName])

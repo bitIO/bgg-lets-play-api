@@ -25,7 +25,7 @@ export class DatabaseService extends PrismaClient {
       this.playPlayer.deleteMany(),
       this.user.deleteMany(),
       this.userCollection.deleteMany(),
-      this.userEvents.deleteMany(),
+      this.eventsUsers.deleteMany(),
       this.userGameStatus.deleteMany(),
     ]);
   }
