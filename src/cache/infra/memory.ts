@@ -1,10 +1,10 @@
 import { addHours, isAfter } from 'date-fns';
-import { BggUser } from '../../anxiety/types';
 import {
   BggApiResponseDataCollection,
   BggAPIResponseDataGame,
-  BggApiResponseDataPlays,
-} from '../../bgg/types';
+  BggApiResponseDataPlay,
+  BggUser,
+} from '../../types';
 import { BggCache } from '../types/cache';
 
 interface CacheStore {
@@ -31,7 +31,7 @@ class CacheLocal implements BggCache {
 
   loadBggGame?: (gameId: string) => BggAPIResponseDataGame;
 
-  loadBggPlays?: (userName: string) => BggApiResponseDataPlays[];
+  loadBggPlays?: (userName: string) => BggApiResponseDataPlay[];
 
   saveBggCollection?: (
     userName: string,
@@ -45,7 +45,7 @@ class CacheLocal implements BggCache {
 
   saveBggPlays?: (
     userName: string,
-    playsData: BggApiResponseDataPlays[],
+    playsData: BggApiResponseDataPlay[],
   ) => void;
 
   async loadUser(userName: string) {

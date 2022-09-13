@@ -1,33 +1,118 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { User } from '@prisma/client';
+import { parse } from 'date-fns';
 import { BggService } from '../bgg/bgg.service';
-import { CreatePlayDto } from './dto/create-play.dto';
-import { UpdatePlayDto } from './dto/update-play.dto';
+import { DatabaseService } from '../database/database.service';
+import {
+  BggApiResponseDataPlay,
+  BggApiResponseDataPlayItem,
+  BggApiResponseDataPlaysItemPlayer,
+} from '../types';
 
 @Injectable()
 export class PlaysService {
-  constructor(private bgg: BggService) {}
+  private readonly logger = new Logger(PlaysService.name);
 
-  create(createPlayDto: CreatePlayDto) {
-    console.log('createPlayDto :>> ', createPlayDto);
+  constructor(private bgg: BggService, private database: DatabaseService) {}
 
-    return 'This action adds a new play';
+  private async upsertPlay(play: BggApiResponseDataPlayItem, userId: number) {
+    try {
+      const id = +play.id;
+      const playData = await this.database.play.upsert({
+        create: {
+          date: parse(play.date, 'yyyy-MM-dd', new Date()),
+          gameId: +play.item.objectid,
+          id: +play.id,
+          length: +play.length,
+          location: play.location,
+          quantity: +play.quantity,
+          userId,
+        },
+        update: {
+          date: parse(play.date, 'yyyy-MM-dd', new Date()),
+          gameId: +play.item.objectid,
+          length: +play.length,
+          location: play.location,
+          quantity: +play.quantity,
+          userId,
+        },
+        where: {
+          id,
+        },
+      });
+
+      let players: BggApiResponseDataPlaysItemPlayer[];
+      if (!Array.isArray(play.players.player)) {
+        players = Array.isArray(play.players.player)
+          ? play.players.player
+          : [play.players.player];
+      } else {
+        players = play.players.player;
+      }
+
+      await this.database.playPlayer.deleteMany({
+        where: {
+          playId: playData.id,
+        },
+      });
+      await this.database.playPlayer.createMany({
+        data: players.map((player) => {
+          return {
+            color: player.color,
+            name: player.name,
+            new: player.new === '1',
+            playId: playData.id,
+            rating: player.rating,
+            score: player.score,
+            startposition: player.startposition,
+            username: player.username,
+            win: player.win === '1',
+          };
+        }),
+      });
+    } catch (error) {
+      this.logger.error(error.message);
+      this.logger.error(play);
+      throw error;
+    }
   }
 
-  findAll() {
-    return `This action returns all plays`;
+  find() {
+    return this.database.play.findMany({
+      include: {
+        Game: true,
+        Players: true,
+        User: true,
+      },
+      orderBy: {
+        date: 'desc',
+      },
+    });
   }
 
-  findOne(userName: string) {
-    return this.bgg.getPlays(userName);
+  findById(id: number) {
+    return this.database.play.findUnique({
+      include: {
+        Game: true,
+        Players: true,
+        User: true,
+      },
+      where: {
+        id,
+      },
+    });
   }
 
-  update(userName: string, updatePlayDto: UpdatePlayDto) {
-    console.log('updateCollectionDto :>> ', updatePlayDto);
+  async update(user: User, response: BggApiResponseDataPlay[]) {
+    const items = response || (await this.bgg.getPlays(user.userName));
+    const plays = items.flatMap((i) => {
+      return i.play;
+    });
+    const promises = [];
+    plays.forEach((play) => {
+      promises.push(this.upsertPlay(play, user.id));
+    });
 
-    return `This action updates a #${userName} play`;
-  }
-
-  remove(userName: string) {
-    return `This action removes a #${userName} play`;
+    return Promise.all(promises);
   }
 }

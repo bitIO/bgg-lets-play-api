@@ -7,12 +7,12 @@ import {
   writeFileSync,
 } from 'fs';
 import { join } from 'path';
-import { BggUser } from '../../anxiety/types';
 import {
   BggApiResponseDataCollection,
   BggAPIResponseDataGame,
-  BggApiResponseDataPlays,
-} from '../../bgg/types';
+  BggApiResponseDataPlay,
+  BggUser,
+} from '../../types';
 import { BggCache } from '../types';
 
 class CacheFile implements BggCache {
@@ -46,7 +46,7 @@ class CacheFile implements BggCache {
 
   loadBggGame?: (gameId: string) => BggAPIResponseDataGame;
 
-  loadBggPlays?: (userName: string) => BggApiResponseDataPlays[];
+  loadBggPlays?: (userName: string) => BggApiResponseDataPlay[];
 
   async loadUser(userName: string) {
     return this.loadContent<BggUser>(userName);
@@ -64,7 +64,7 @@ class CacheFile implements BggCache {
 
   saveBggPlays?: (
     userName: string,
-    playsData: BggApiResponseDataPlays[],
+    playsData: BggApiResponseDataPlay[],
   ) => void;
 
   async saveUser(userData: BggUser) {

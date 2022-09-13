@@ -5,6 +5,7 @@ import { PlaysService } from './plays.service';
 
 @Module({
   controllers: [PlaysController],
+  exports: [PlaysService],
   imports: [BggModule],
   providers: [PlaysService],
 })

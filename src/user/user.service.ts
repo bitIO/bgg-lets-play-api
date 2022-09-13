@@ -1,33 +1,241 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { BggService } from '../bgg/bgg.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { DatabaseService } from '../database/database.service';
+import { GameService } from '../game/game.service';
+import { PlaysService } from '../plays/plays.service';
+import { BggApiResponseDataCollectionItem } from '../types';
+import { isExpired } from '../utils';
 
 @Injectable()
 export class UserService {
-  constructor(private bgg: BggService) {}
+  private readonly logger = new Logger(UserService.name);
 
-  create(createUserDto: CreateUserDto) {
-    console.log('createUserDto :>> ', createUserDto);
+  constructor(
+    private bgg: BggService,
+    private config: ConfigService,
+    private database: DatabaseService,
+    private games: GameService,
+    private plays: PlaysService,
+  ) {}
 
-    return 'This action adds a new user';
+  private readUserFromDatabase(userName: string) {
+    return this.database.user.findUnique({
+      include: {
+        Plays: {
+          include: {
+            Game: true,
+            Players: true,
+          },
+        },
+        UserCollection: {
+          include: {
+            Game: {
+              include: {
+                GameImage: true,
+                GameInfo: true,
+                GameMarket: true,
+                GameRating: true,
+              },
+            },
+          },
+          orderBy: {
+            Game: {
+              name: 'asc',
+            },
+          },
+        },
+        UserGameStatus: true,
+      },
+      where: {
+        userName,
+      },
+    });
+  }
+
+  private async updateGameStatus(
+    game: BggApiResponseDataCollectionItem,
+    userId,
+  ) {
+    try {
+      await this.database.userGameStatus.upsert({
+        create: {
+          fortrade: game.status.fortrade === '1',
+          gameId: +game.objectid,
+          own: game.status.own === '1',
+          preordered: game.status.preordered === '1',
+          prevowned: game.status.prevowned === '1',
+          userId,
+          want: game.status.want === '1',
+          wanttobuy: game.status.wanttobuy === '1',
+          wanttoplay: game.status.wanttoplay === '1',
+          wishlist: game.status.wishlist === '1',
+        },
+        update: {
+          fortrade: game.status.fortrade === '1',
+          own: game.status.own === '1',
+          preordered: game.status.preordered === '1',
+          prevowned: game.status.prevowned === '1',
+          want: game.status.want === '1',
+          wanttobuy: game.status.wanttobuy === '1',
+          wanttoplay: game.status.wanttoplay === '1',
+          wishlist: game.status.wishlist === '1',
+        },
+        where: {
+          gameId_userId: {
+            gameId: +game.objectid,
+            userId,
+          },
+        },
+      });
+    } catch (error) {
+      this.logger.error(error.message);
+      this.logger.error(`Game: ${game.name.text} / #${game.objectid}`);
+    }
   }
 
   findAll() {
-    return `This action returns all user`;
+    return this.database.user.findMany({});
   }
 
-  findOne(userName: string) {
-    return this.bgg.getUser(userName);
+  findByUserName(userNames: string[]) {
+    return this.database.user.findMany({
+      include: {
+        Plays: {
+          include: {
+            Game: true,
+            Players: true,
+          },
+        },
+        UserCollection: {
+          include: {
+            Game: {
+              include: {
+                GameImage: true,
+                GameInfo: true,
+                GameMarket: true,
+                GameRating: true,
+              },
+            },
+          },
+          orderBy: {
+            Game: {
+              name: 'asc',
+            },
+          },
+        },
+      },
+      where: {
+        userName: {
+          in: userNames,
+        },
+      },
+    });
   }
 
-  update(userName: string, updateUserDto: UpdateUserDto) {
-    console.log('updateUserDto :>> ', updateUserDto);
+  async findOneOrSync(userName: string) {
+    this.logger.debug('request user info', {
+      userName,
+    });
 
-    return `This action updates a #${userName} user`;
+    const user = await this.readUserFromDatabase(userName);
+
+    if (
+      user &&
+      !isExpired(
+        user.updatedAt,
+        +this.config.getOrThrow('CACHE_TTL_IN_SECONDS'),
+      )
+    ) {
+      this.logger.debug('User data still valid', {
+        updatedAt: user.updatedAt,
+        userName,
+      });
+
+      return user;
+    }
+
+    this.logger.debug('User data not found or expired', {
+      userName,
+    });
+
+    await this.update(userName);
+
+    return this.readUserFromDatabase(userName);
+  }
+
+  async update(userName: string) {
+    const [bggResponseUser, bggResponseCollection, bggResponsePlays] =
+      await Promise.all([
+        this.bgg.getUser(userName),
+        this.bgg.getCollection(userName, true),
+        this.bgg.getPlays(userName),
+      ]);
+    const gameIds = [
+      ...new Set(
+        bggResponseCollection.item.map((item) => {
+          return +item.objectid;
+        }),
+      ),
+    ];
+    bggResponsePlays.forEach(({ play }) => {
+      play.forEach((p) => {
+        const gameId = +p.item.objectid;
+        if (!gameIds.includes(gameId)) {
+          gameIds.push(gameId);
+        }
+      });
+    });
+
+    const gamesInfo = await this.games.retrieveAndUpdateGamesInfo(gameIds);
+    const dbUser = await this.database.user.upsert({
+      create: {
+        avatar: bggResponseUser.avatarlink.value,
+        firstName: bggResponseUser.firstname.value,
+        id: +bggResponseUser.id,
+        lastName: bggResponseUser.lastname.value,
+        userName: bggResponseUser.name,
+      },
+      update: {
+        avatar: bggResponseUser.avatarlink.value,
+        firstName: bggResponseUser.firstname.value,
+        lastName: bggResponseUser.lastname.value,
+        userName: bggResponseUser.name,
+      },
+      where: {
+        userName,
+      },
+    });
+    await this.database.userCollection.deleteMany({
+      where: {
+        userId: dbUser.id,
+      },
+    });
+    await this.database.userCollection.createMany({
+      data: gamesInfo.map((gameInfo) => {
+        return {
+          gameId: gameInfo.id,
+          userId: dbUser.id,
+        };
+      }),
+      skipDuplicates: true,
+    });
+    await this.plays.update(dbUser, bggResponsePlays);
+
+    await Promise.all(
+      bggResponseCollection.item.map((game) => {
+        return this.updateGameStatus(game, dbUser.id);
+      }),
+    );
+
+    return dbUser;
   }
 
   remove(userName: string) {
-    return `This action removes a #${userName} user`;
+    return this.database.user.delete({
+      where: {
+        userName,
+      },
+    });
   }
 }

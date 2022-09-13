@@ -7,16 +7,17 @@ export interface BggGame {
   plays?: number;
   publishedYear?: number;
   stats?: BggGameStats;
+  status?: BggGameStatus;
 }
 
 export interface BggGameInfo {
   maxPlayTime: number;
   maxPlayers: number;
+  minAge: number;
   minPlayTime: number;
   minPlayers: number;
-  numOwners: number;
   playingTime: number;
-  weight?: number;
+  weight: number;
 }
 
 export interface BggGameImage {
@@ -43,12 +44,11 @@ export interface BggGameRating {
 export interface BggGameStats {
   comments: number;
   rating: BggGameRating;
-  weight: number;
+  weights: number;
 }
 
 export interface BggGameStatus {
   fortrade: boolean;
-  lastmodified: '2020-12-24 19:28:17';
   own: boolean;
   preordered: boolean;
   prevowned: boolean;

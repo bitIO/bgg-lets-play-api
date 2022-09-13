@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { BggUser } from '../anxiety/types';
 import {
   BggApiResponseDataCollection,
   BggAPIResponseDataGame,
-  BggApiResponseDataPlays,
-} from '../bgg/types';
+  BggApiResponseDataPlay,
+  BggUser,
+} from '../types';
 import { getCacheStore } from './infra';
 import { BggCache } from './types';
 
@@ -20,7 +20,7 @@ export class CacheService implements BggCache {
 
   loadBggGame?: (gameId: string) => BggAPIResponseDataGame;
 
-  loadBggPlays?: (userName: string) => BggApiResponseDataPlays[];
+  loadBggPlays?: (userName: string) => BggApiResponseDataPlay[];
 
   loadUser(userName: string) {
     return this.store.loadUser(userName);
@@ -38,7 +38,7 @@ export class CacheService implements BggCache {
 
   saveBggPlays?: (
     userName: string,
-    playsData: BggApiResponseDataPlays[],
+    playsData: BggApiResponseDataPlay[],
   ) => void;
 
   async saveUser(userData: BggUser) {

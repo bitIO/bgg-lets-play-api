@@ -1,5 +1,13 @@
 import { Type } from 'class-transformer';
-import { IsDate, IsNotEmpty, IsOptional, MinLength } from 'class-validator';
+import {
+  IsArray,
+  IsDate,
+  IsNotEmpty,
+  IsOptional,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
+import { NonBggUser } from './NonBggUser';
 
 export class CreateEventDto {
   @IsNotEmpty()
@@ -28,4 +36,16 @@ export class CreateEventDto {
   })
   @IsDate()
   endsAt: Date;
+
+  @IsArray()
+  bggUsers: string[];
+
+  @IsArray()
+  @Type(() => {
+    return NonBggUser;
+  })
+  @ValidateNested({
+    each: true,
+  })
+  nonBggUsers: NonBggUser[];
 }

@@ -22,7 +22,210 @@ model Event {
   coordinates String?
   description String?
   endsAt      DateTime?
+  nomBggUser  Json[]
+
+  EventsUsers EventsUsers[]
 
   @@unique([name, location, startsAt])
   @@map("events")
+}
+
+model EventsUsers {
+  user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId  Int
+  eventId Int
+
+  @@id([userId, eventId])
+  @@map("events_users")
+}
+
+model User {
+  id        Int      @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  firstName String
+  lastName  String
+  userName  String
+  avatar    String?
+
+  Plays          Play[]
+  UserCollection UserCollection[]
+  UserGameStatus UserGameStatus[]
+  EventsUsers    EventsUsers[]
+  PlayPlayer     PlayPlayer[]
+
+  @@unique([userName])
+  @@map("users")
+}
+
+model UserCollection {
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  User   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
+  Game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId Int
+
+  @@id([userId, gameId])
+  @@map("user_collection")
+}
+
+model Game {
+  id        Int      @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name          String
+  plays         Int?
+  publishedYear Int?
+
+  GameInfo     GameInfo?   @relation(fields: [gameInfoId], references: [id], onDelete: Cascade)
+  gameInfoId   Int?
+  GameImage    GameImage?  @relation(fields: [gameImageId], references: [id], onDelete: Cascade)
+  gameImageId  Int?
+  GameMarket   GameMarket? @relation(fields: [gameMarketId], references: [id], onDelete: Cascade)
+  gameMarketId Int?
+  GameRating   GameRating? @relation(fields: [gameRatingId], references: [id], onDelete: Cascade)
+  gameRatingId Int?
+
+  Play           Play[]
+  UserGameStatus UserGameStatus[]
+  UserCollection UserCollection[]
+
+  @@unique([name])
+  @@map("games")
+}
+
+model GameInfo {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  comments    Int
+  description String
+  maxPlayTime Int
+  maxPlayers  Int
+  minAge      Int
+  minPlayTime Int
+  minPlayers  Int
+  playingTime Int
+  weight      Float
+  weights     Int
+
+  Game Game[]
+
+  @@map("game_info")
+}
+
+model GameImage {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  image     String
+  thumbnail String
+
+  Game Game[]
+
+  @@map("game_images")
+}
+
+model GameMarket {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owned    Int
+  trading  Int
+  wanting  Int
+  whishing Int
+
+  Game Game[]
+
+  @@map("game_market")
+}
+
+model GameRating {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  average      Float
+  bayesaverage Float
+  median       Int
+  stddev       Float
+  users        Int
+  value        Int
+
+  Game Game[]
+
+  @@map("game_rating")
+}
+
+model UserGameStatus {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  fortrade   Boolean
+  own        Boolean
+  preordered Boolean
+  prevowned  Boolean
+  want       Boolean
+  wanttobuy  Boolean
+  wanttoplay Boolean
+  wishlist   Boolean
+
+  Game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  User   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId Int
+  userId Int
+
+  @@unique([gameId, userId])
+  @@map("user_game_status")
+}
+
+model Play {
+  id        Int      @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  date     DateTime
+  length   Int
+  location String
+  quantity Int
+
+  Game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId Int
+  User   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
+
+  Players PlayPlayer[]
+
+  @@map("plays")
+}
+
+model PlayPlayer {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  color         String?
+  name          String?
+  new           Boolean?
+  rating        String?
+  score         String?
+  startposition String?
+  username      String?
+  win           Boolean?
+
+  User   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int?
+  Play   Play? @relation(fields: [playId], references: [id], onDelete: Cascade)
+  playId Int?
+
+  @@map("play_players")
 }

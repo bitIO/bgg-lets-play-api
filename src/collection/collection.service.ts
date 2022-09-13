@@ -1,33 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { BggService } from '../bgg/bgg.service';
-import { CreateCollectionDto } from './dto/create-collection.dto';
-import { UpdateCollectionDto } from './dto/update-collection.dto';
+import { DatabaseService } from '../database/database.service';
+import { GameService } from '../game/game.service';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class CollectionService {
-  constructor(private bgg: BggService) {}
+  private readonly logger = new Logger(CollectionService.name);
 
-  create(createCollectionDto: CreateCollectionDto) {
-    console.log('createCollectionDto :>> ', createCollectionDto);
-
-    return 'This action adds a new collection';
-  }
-
-  findAll() {
-    return `This action returns all collection`;
-  }
-
-  findOne(userName) {
-    return this.bgg.getCollection(userName);
-  }
-
-  update(userName, updateCollectionDto: UpdateCollectionDto) {
-    console.log('updateCollectionDto :>> ', updateCollectionDto);
-
-    return `This action updates a #${userName} collection`;
-  }
-
-  remove(userName) {
-    return `This action removes a #${userName} collection`;
-  }
+  constructor(
+    private config: ConfigService,
+    private bgg: BggService,
+    private database: DatabaseService,
+    private game: GameService,
+    private user: UserService,
+  ) {}
 }

@@ -2,20 +2,43 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { DatabaseService } from '../database/database.service';
 import { AlreadyCreatedError } from '../database/types';
-import { CreateEventDto } from './dto/create-event.dto';
-import { UpdateEventDto } from './dto/update-event.dto';
+import { UserService } from '../user/user.service';
+import { CreateEventDto } from './dto/CreateEvent.dto';
+import { UpdateEventDto } from './dto/UpdateEvent.dto';
 
 @Injectable()
 export class EventService {
-  constructor(private db: DatabaseService) {}
+  constructor(private db: DatabaseService, private users: UserService) {}
 
-  async create(createEventDto: CreateEventDto) {
+  async create(dto: CreateEventDto) {
     try {
       const event = await this.db.event.create({
         data: {
-          ...createEventDto,
+          coordinates: dto.coordinates,
+          description: dto.description,
+          endsAt: dto.endsAt,
+          location: dto.location,
+          name: dto.name,
+          nomBggUser: dto.nonBggUsers as unknown as Prisma.JsonArray,
+          startsAt: dto.startsAt,
         },
       });
+
+      const users = await Promise.all(
+        dto.bggUsers.map((bggUser) => {
+          return this.users.findOneOrSync(bggUser);
+        }),
+      );
+      await Promise.all(
+        users.map((user) => {
+          return this.db.eventsUsers.create({
+            data: {
+              eventId: event.id,
+              userId: user.id,
+            },
+          });
+        }),
+      );
 
       return event;
     } catch (error) {

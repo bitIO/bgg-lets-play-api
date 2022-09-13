@@ -6,6 +6,7 @@ import { CacheModule } from './cache/cache.module';
 import { CollectionModule } from './collection/collection.module';
 import { DatabaseModule } from './database/database.module';
 import { EventModule } from './event/event.module';
+import { GameModule } from './game/game.module';
 import { PlaysModule } from './plays/plays.module';
 import { ThingModule } from './thing/thing.module';
 import { UserModule } from './user/user.module';
@@ -21,6 +22,7 @@ import { UserModule } from './user/user.module';
     CacheModule,
     DatabaseModule,
     EventModule,
+    GameModule,
     PlaysModule,
     ThingModule,
     UserModule,

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  BggCollectionParams,
   getBggCollection,
   getBggPlays,
   getBggThing,
@@ -8,9 +9,9 @@ import {
 import {
   BggApiResponseDataCollection,
   BggAPIResponseDataGame,
-  BggApiResponseDataPlays,
+  BggApiResponseDataPlay,
   BggApiResponseDataUser,
-} from './types';
+} from '../types';
 
 @Injectable()
 export class BggService {
@@ -22,11 +23,14 @@ export class BggService {
     return data as BggApiResponseDataUser;
   }
 
-  async getCollection(userName: string) {
-    const { data } = await getBggCollection({
-      stats: 1,
+  async getCollection(userName: string, includeStats?: boolean) {
+    const params: BggCollectionParams = {
       username: userName,
-    });
+    };
+    if (includeStats) {
+      params.stats = 1;
+    }
+    const { data } = await getBggCollection(params);
 
     return data as BggApiResponseDataCollection;
   }
@@ -37,8 +41,8 @@ export class BggService {
       username: userName,
     });
 
-    const data: BggApiResponseDataPlays[] = [];
-    const responseData = response.data as BggApiResponseDataPlays;
+    const data: BggApiResponseDataPlay[] = [];
+    const responseData = response.data as BggApiResponseDataPlay;
     data.push(responseData);
 
     const total = +responseData.total;
