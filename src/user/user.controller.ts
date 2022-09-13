@@ -14,43 +14,43 @@ export class UserController {
       avatar: dbUser.avatar,
       collection: dbUser.UserCollection.map((item) => {
         const gameStatus = dbUser.UserGameStatus.find((userGameStatus) => {
-          return userGameStatus.id === item.game.id;
+          return userGameStatus.id === item.Game.id;
         });
 
         return {
           id: item.gameId,
           images: {
-            image: item.game.images.image,
-            thumbnail: item.game.images.thumbnail,
+            image: item.Game.GameImage.image,
+            thumbnail: item.Game.GameImage.thumbnail,
           },
           info: {
-            maxPlayTime: item.game.info.maxPlayTime,
-            maxPlayers: item.game.info.maxPlayers,
-            minAge: item.game.info.minAge,
-            minPlayTime: item.game.info.minPlayTime,
-            minPlayers: item.game.info.minPlayers,
-            playingTime: item.game.info.playingTime,
-            weight: item.game.info.weight,
+            maxPlayTime: item.Game.GameInfo.maxPlayTime,
+            maxPlayers: item.Game.GameInfo.maxPlayers,
+            minAge: item.Game.GameInfo.minAge,
+            minPlayTime: item.Game.GameInfo.minPlayTime,
+            minPlayers: item.Game.GameInfo.minPlayers,
+            playingTime: item.Game.GameInfo.playingTime,
+            weight: item.Game.GameInfo.weight,
           },
           market: {
-            owned: item.game.market.owned,
-            trading: item.game.market.trading,
-            wanting: item.game.market.wanting,
-            whishing: item.game.market.whishing,
+            owned: item.Game.GameMarket.owned,
+            trading: item.Game.GameMarket.trading,
+            wanting: item.Game.GameMarket.wanting,
+            whishing: item.Game.GameMarket.whishing,
           },
-          name: item.game.name,
-          publishedYear: item.game.publishedYear,
+          name: item.Game.name,
+          publishedYear: item.Game.publishedYear,
           stats: {
-            comments: item.game.info.comments,
+            comments: item.Game.GameInfo.comments,
             rating: {
-              average: item.game.rating.average,
-              bayesaverage: item.game.rating.bayesaverage,
-              median: item.game.rating.median,
-              stddev: item.game.rating.stddev,
-              users: item.game.rating.users,
-              value: item.game.rating.value,
+              average: item.Game.GameRating.average,
+              bayesaverage: item.Game.GameRating.bayesaverage,
+              median: item.Game.GameRating.median,
+              stddev: item.Game.GameRating.stddev,
+              users: item.Game.GameRating.users,
+              value: item.Game.GameRating.value,
             },
-            weights: item.game.info.weights,
+            weights: item.Game.GameInfo.weights,
           },
           status: {
             fortrade: gameStatus ? gameStatus.fortrade : false,
@@ -67,17 +67,17 @@ export class UserController {
       firstName: dbUser.firstName,
       id: dbUser.id,
       lastName: dbUser.lastName,
-      plays: dbUser.plays.map((play) => {
+      plays: dbUser.Plays.map((play) => {
         return {
           date: play.date,
           game: {
-            id: play.game.id,
-            name: play.game.name,
+            id: play.Game.id,
+            name: play.Game.name,
           },
           id: play.id,
           length: play.length,
           location: play.location,
-          players: play.players.map((player) => {
+          players: play.Players.map((player) => {
             return {
               color: player.color,
               name: player.name,

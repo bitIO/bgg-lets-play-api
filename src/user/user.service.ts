@@ -22,30 +22,30 @@ export class UserService {
   private readUserFromDatabase(userName: string) {
     return this.database.user.findUnique({
       include: {
+        Plays: {
+          include: {
+            Game: true,
+            Players: true,
+          },
+        },
         UserCollection: {
           include: {
-            game: {
+            Game: {
               include: {
-                images: true,
-                info: true,
-                market: true,
-                rating: true,
+                GameImage: true,
+                GameInfo: true,
+                GameMarket: true,
+                GameRating: true,
               },
             },
           },
           orderBy: {
-            game: {
+            Game: {
               name: 'asc',
             },
           },
         },
         UserGameStatus: true,
-        plays: {
-          include: {
-            game: true,
-            players: true,
-          },
-        },
       },
       where: {
         userName,
@@ -101,27 +101,27 @@ export class UserService {
   findByUserName(userNames: string[]) {
     return this.database.user.findMany({
       include: {
+        Plays: {
+          include: {
+            Game: true,
+            Players: true,
+          },
+        },
         UserCollection: {
           include: {
-            game: {
+            Game: {
               include: {
-                images: true,
-                info: true,
-                market: true,
-                rating: true,
+                GameImage: true,
+                GameInfo: true,
+                GameMarket: true,
+                GameRating: true,
               },
             },
           },
           orderBy: {
-            game: {
+            Game: {
               name: 'asc',
             },
-          },
-        },
-        plays: {
-          include: {
-            game: true,
-            players: true,
           },
         },
       },

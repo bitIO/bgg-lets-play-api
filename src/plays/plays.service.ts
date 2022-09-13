@@ -80,9 +80,9 @@ export class PlaysService {
   find() {
     return this.database.play.findMany({
       include: {
+        Game: true,
+        Players: true,
         User: true,
-        game: true,
-        players: true,
       },
       orderBy: {
         date: 'desc',
@@ -93,9 +93,9 @@ export class PlaysService {
   findById(id: number) {
     return this.database.play.findUnique({
       include: {
+        Game: true,
+        Players: true,
         User: true,
-        game: true,
-        players: true,
       },
       where: {
         id,

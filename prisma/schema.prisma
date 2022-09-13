@@ -50,7 +50,7 @@ model User {
   userName  String
   avatar    String?
 
-  plays          Play[]
+  Plays          Play[]
   UserCollection UserCollection[]
   UserGameStatus UserGameStatus[]
   EventsUsers    EventsUsers[]
@@ -64,9 +64,9 @@ model UserCollection {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User   User @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId Int
-  game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  Game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
   gameId Int
 
   @@id([userId, gameId])
@@ -82,13 +82,13 @@ model Game {
   plays         Int?
   publishedYear Int?
 
-  info         GameInfo?   @relation(fields: [gameInfoId], references: [id], onDelete: Cascade)
+  GameInfo     GameInfo?   @relation(fields: [gameInfoId], references: [id], onDelete: Cascade)
   gameInfoId   Int?
-  images       GameImage?  @relation(fields: [gameImageId], references: [id], onDelete: Cascade)
+  GameImage    GameImage?  @relation(fields: [gameImageId], references: [id], onDelete: Cascade)
   gameImageId  Int?
-  market       GameMarket? @relation(fields: [gameMarketId], references: [id], onDelete: Cascade)
+  GameMarket   GameMarket? @relation(fields: [gameMarketId], references: [id], onDelete: Cascade)
   gameMarketId Int?
-  rating       GameRating? @relation(fields: [gameRatingId], references: [id], onDelete: Cascade)
+  GameRating   GameRating? @relation(fields: [gameRatingId], references: [id], onDelete: Cascade)
   gameRatingId Int?
 
   Play           Play[]
@@ -179,8 +179,8 @@ model UserGameStatus {
   wanttoplay Boolean
   wishlist   Boolean
 
-  game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  User   User @relation(fields: [userId], references: [id], onDelete: Cascade)
   gameId Int
   userId Int
 
@@ -198,12 +198,12 @@ model Play {
   location String
   quantity Int
 
-  game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  Game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
   gameId Int
   User   User @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId Int
 
-  players PlayPlayer[]
+  Players PlayPlayer[]
 
   @@map("plays")
 }
@@ -222,9 +222,9 @@ model PlayPlayer {
   username      String?
   win           Boolean?
 
-  user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId Int?
-  play   Play? @relation(fields: [playId], references: [id], onDelete: Cascade)
+  Play   Play? @relation(fields: [playId], references: [id], onDelete: Cascade)
   playId Int?
 
   @@map("play_players")

@@ -13,13 +13,13 @@ export class PlaysController {
     return {
       date: play.date,
       game: {
-        id: play.game.id,
-        name: play.game.name,
+        id: play.Game.id,
+        name: play.Game.name,
       },
       id: play.id,
       length: play.length,
       location: play.location,
-      players: play.players.map((player) => {
+      players: play.Players.map((player) => {
         return {
           color: player.color,
           name: player.name,
@@ -43,13 +43,13 @@ export class PlaysController {
       return {
         date: play.date,
         game: {
-          id: play.game.id,
-          name: play.game.name,
+          id: play.Game.id,
+          name: play.Game.name,
         },
         id: play.id,
         length: play.length,
         location: play.location,
-        players: play.players.map((player) => {
+        players: play.Players.map((player) => {
           return {
             color: player.color,
             name: player.name,

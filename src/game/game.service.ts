@@ -149,10 +149,10 @@ export class GameService {
   findAll() {
     return this.database.game.findMany({
       include: {
-        images: true,
-        info: true,
-        market: true,
-        rating: true,
+        GameImage: true,
+        GameInfo: true,
+        GameMarket: true,
+        GameRating: true,
       },
     });
   }
@@ -160,10 +160,10 @@ export class GameService {
   findOneById(id: number) {
     return this.database.game.findUnique({
       include: {
-        images: true,
-        info: true,
-        market: true,
-        rating: true,
+        GameImage: true,
+        GameInfo: true,
+        GameMarket: true,
+        GameRating: true,
       },
       where: {
         id,
