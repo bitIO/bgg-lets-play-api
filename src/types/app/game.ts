@@ -7,6 +7,7 @@ export interface BggGame {
   plays?: number;
   publishedYear?: number;
   stats?: BggGameStats;
+  status?: BggGameStatus;
 }
 
 export interface BggGameInfo {

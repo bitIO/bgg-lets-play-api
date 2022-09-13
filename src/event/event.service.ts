@@ -26,7 +26,7 @@ export class EventService {
 
       const users = await Promise.all(
         dto.bggUsers.map((bggUser) => {
-          return this.users.findOne(bggUser);
+          return this.users.findOneOrSync(bggUser);
         }),
       );
       await Promise.all(

@@ -170,6 +170,7 @@ model UserGameStatus {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  fortrade   Boolean
   own        Boolean
   preordered Boolean
   prevowned  Boolean

@@ -8,11 +8,15 @@ export class UserController {
 
   @Get(':userName')
   async findOne(@Param('userName') userName: string): Promise<BggUser> {
-    const dbUser = await this.userService.findOne(userName);
+    const dbUser = await this.userService.findOneOrSync(userName);
 
     return {
       avatar: dbUser.avatar,
       collection: dbUser.UserCollection.map((item) => {
+        const gameStatus = dbUser.UserGameStatus.find((userGameStatus) => {
+          return userGameStatus.id === item.game.id;
+        });
+
         return {
           id: item.gameId,
           images: {
@@ -47,6 +51,16 @@ export class UserController {
               value: item.game.rating.value,
             },
             weights: item.game.info.weights,
+          },
+          status: {
+            fortrade: gameStatus ? gameStatus.fortrade : false,
+            own: gameStatus ? gameStatus.own : false,
+            preordered: gameStatus ? gameStatus.preordered : false,
+            prevowned: gameStatus ? gameStatus.prevowned : false,
+            want: gameStatus ? gameStatus.want : false,
+            wanttobuy: gameStatus ? gameStatus.wanttobuy : false,
+            wanttoplay: gameStatus ? gameStatus.wanttoplay : false,
+            wishlist: gameStatus ? gameStatus.wishlist : false,
           },
         };
       }),

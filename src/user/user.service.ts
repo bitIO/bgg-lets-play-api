@@ -4,6 +4,7 @@ import { BggService } from '../bgg/bgg.service';
 import { DatabaseService } from '../database/database.service';
 import { GameService } from '../game/game.service';
 import { PlaysService } from '../plays/plays.service';
+import { BggApiResponseDataCollectionItem } from '../types';
 import { isExpired } from '../utils';
 
 @Injectable()
@@ -17,6 +18,81 @@ export class UserService {
     private games: GameService,
     private plays: PlaysService,
   ) {}
+
+  private readUserFromDatabase(userName: string) {
+    return this.database.user.findUnique({
+      include: {
+        UserCollection: {
+          include: {
+            game: {
+              include: {
+                images: true,
+                info: true,
+                market: true,
+                rating: true,
+              },
+            },
+          },
+          orderBy: {
+            game: {
+              name: 'asc',
+            },
+          },
+        },
+        UserGameStatus: true,
+        plays: {
+          include: {
+            game: true,
+            players: true,
+          },
+        },
+      },
+      where: {
+        userName,
+      },
+    });
+  }
+
+  private async updateGameStatus(
+    game: BggApiResponseDataCollectionItem,
+    userId,
+  ) {
+    try {
+      await this.database.userGameStatus.upsert({
+        create: {
+          fortrade: game.status.fortrade === '1',
+          gameId: +game.objectid,
+          own: game.status.own === '1',
+          preordered: game.status.preordered === '1',
+          prevowned: game.status.prevowned === '1',
+          userId,
+          want: game.status.want === '1',
+          wanttobuy: game.status.wanttobuy === '1',
+          wanttoplay: game.status.wanttoplay === '1',
+          wishlist: game.status.wishlist === '1',
+        },
+        update: {
+          fortrade: game.status.fortrade === '1',
+          own: game.status.own === '1',
+          preordered: game.status.preordered === '1',
+          prevowned: game.status.prevowned === '1',
+          want: game.status.want === '1',
+          wanttobuy: game.status.wanttobuy === '1',
+          wanttoplay: game.status.wanttoplay === '1',
+          wishlist: game.status.wishlist === '1',
+        },
+        where: {
+          gameId_userId: {
+            gameId: +game.objectid,
+            userId,
+          },
+        },
+      });
+    } catch (error) {
+      this.logger.error(error.message);
+      this.logger.error(`Game: ${game.name.text} / #${game.objectid}`);
+    }
+  }
 
   findAll() {
     return this.database.user.findMany({});
@@ -57,41 +133,12 @@ export class UserService {
     });
   }
 
-  async findOne(userName: string) {
+  async findOneOrSync(userName: string) {
     this.logger.debug('request user info', {
       userName,
     });
 
-    const user = await this.database.user.findUnique({
-      include: {
-        UserCollection: {
-          include: {
-            game: {
-              include: {
-                images: true,
-                info: true,
-                market: true,
-                rating: true,
-              },
-            },
-          },
-          orderBy: {
-            game: {
-              name: 'asc',
-            },
-          },
-        },
-        plays: {
-          include: {
-            game: true,
-            players: true,
-          },
-        },
-      },
-      where: {
-        userName,
-      },
-    });
+    const user = await this.readUserFromDatabase(userName);
 
     if (
       user &&
@@ -114,36 +161,7 @@ export class UserService {
 
     await this.update(userName);
 
-    return this.database.user.findUnique({
-      include: {
-        UserCollection: {
-          include: {
-            game: {
-              include: {
-                images: true,
-                info: true,
-                market: true,
-                rating: true,
-              },
-            },
-          },
-          orderBy: {
-            game: {
-              name: 'asc',
-            },
-          },
-        },
-        plays: {
-          include: {
-            game: true,
-            players: true,
-          },
-        },
-      },
-      where: {
-        userName,
-      },
-    });
+    return this.readUserFromDatabase(userName);
   }
 
   async update(userName: string) {
@@ -203,6 +221,12 @@ export class UserService {
       skipDuplicates: true,
     });
     await this.plays.update(dbUser, bggResponsePlays);
+
+    await Promise.all(
+      bggResponseCollection.item.map((game) => {
+        return this.updateGameStatus(game, dbUser.id);
+      }),
+    );
 
     return dbUser;
   }
