@@ -21,6 +21,8 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - name: Clean installation
       run: npm ci
+    - name: Prisma deploy
+      run: npx prisma migrate
     - name: Serverless deploy
       uses: serverless/github-action@v3.1
       with:
