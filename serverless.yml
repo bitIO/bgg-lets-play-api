@@ -32,4 +32,3 @@ functions:
       CACHE_TTL_IN_SECONDS: 3600
       CACHE_TYPE: file
       NO_COLOR: 1
-    logRetentionInDays: 3
