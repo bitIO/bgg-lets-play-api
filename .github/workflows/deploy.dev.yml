@@ -22,7 +22,9 @@ jobs:
     - name: Clean installation
       run: npm ci
     - name: Prisma deploy
-      run: npx prisma migrate
+      run: npx prisma migrate deploy
+      env:
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
     - name: Serverless deploy
       uses: serverless/github-action@v3.1
       with:
